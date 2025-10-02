@@ -124,6 +124,7 @@ dmypy.json
 
 # ChromaDB
 chroma_db/
+*.db
 
 # Model files
 models/
@@ -133,9 +134,19 @@ models/
 # Data files
 data/
 *.json
+*.jsonl
 *.csv
-*.parquet
 
 # Logs
 logs/
 *.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
