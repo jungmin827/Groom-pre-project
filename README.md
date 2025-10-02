@@ -1,6 +1,6 @@
 # KorQuAD RAG 시스템
 
-한국어 질의응답을 위한 RAG (Retrieval-Augmented Generation) 시스템입니다.
+질의응답을 위한 RAG (Retrieval-Augmented Generation) 챗봇 서비스입니다.
 
 ---
 
@@ -70,4 +70,38 @@ uvicorn src.app.main:app --reload --host 0.0.0.0 --port 8000
 #### 4. 스트림릿 앱 실행
 ```Bash
 streamlit run streamlit_chatbot.py --server.port 8501
+```
+
+#### API 사용 예시 (cURL)
+Streamlit UI에서 편하게 질문을 통해 api 테스트를 할 수 있습니다!
+요청 (Request)
+터미널에서 아래 cURL 명령어를 사용하여 질의응답 API(api/v1/qa)에 POST 요청을 보낼 수 있습니다.
+```
+curl -X 'POST' \
+  'http://localhost:8000/api/v1/qa' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "question": "임진왜란은 언제 발발했나요?",
+  "top_k": 3
+}'
+```
+응답 (Response)
+요청이 성공하면 아래와 같은 형식의 JSON 응답을 받게 됩니다.
+```
+{
+  "retrieved_document_id": "korquad_12345_chunk_0",
+  "retrieved_document": "임진왜란은 1592년에 일본이 조선을 침략하면서 시작된 전쟁이다. ... (검색된 문서 내용)",
+  "question": "임진왜란은 언제 발발했나요?",
+  "answers": "1592년에 발발했습니다.",
+  "quality_metrics": {
+    "confidence": 0.85,
+    "is_valid": true,
+    "search_quality": {
+      "total_results": 3,
+      "avg_similarity_score": 0.91,
+      "avg_relevance_score": 0.78
+    }
+  }
+}
 ```
