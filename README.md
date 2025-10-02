@@ -1,75 +1,68 @@
 # KorQuAD RAG 시스템
 
-한국어 질의응답을 위한 RAG(Retrieval-Augmented Generation) 시스템입니다.
+한국어 질의응답을 위한 RAG (Retrieval-Augmented Generation) 시스템입니다.
 
-## 아키텍처
+---
 
-```
-korquad-rag/
-├── src/app/
-│   ├── main.py          # FastAPI 애플리케이션 진입점
-│   ├── api/routes.py    # API 라우트 정의
-│   ├── core/config.py   # 설정 관리
-│   ├── data/preprocess.py # 데이터 전처리
-│   ├── embeddings/      # 임베딩 생성
-│   ├── retriever/       # 문서 검색
-│   └── models/          # LLM 모델 래퍼
-├── tests/               # 테스트 파일
-└── scripts/            # 유틸리티 스크립트
-```
+### 1. 문제 정의 및 아키텍처 설계 🧠
 
-## 설치 및 실행
+이 프로젝트는 주어진 질문에 대해 정확하고 신뢰성 있는 답변을 제공하기 위해 RAG(검색 증강 생성) 시스템을 구현하는 것을 목표로 합니다. 아키텍처는 다음과 같이 역할과 책임을 명확하게 분리하여 모듈화되었습니다.
 
-### 1. 가상환경 생성 및 활성화
+-   **`src/app/api/routes.py`**: FastAPI 라우터 모듈로, `health` 및 `qa` 엔드포인트를 정의하여 외부 요청을 처리합니다.
+-   **`src/app/core/config.py`**: 애플리케이션의 설정(ChromaDB 디렉토리, 모델명 등)을 관리하여 코드와 설정을 분리합니다.
+-   **`src/app/embeddings/embeddings.py`**: 텍스트를 임베딩 벡터로 변환하는 역할을 담당합니다.
+-   **`src/app/retriever/retriever.py`**: 임베딩된 벡터를 기반으로 질문과 유사한 문서를 검색하고 관련성 점수를 계산하는 핵심 모듈입니다.
+-   **`src/app/data/preprocess.py`**: 데이터 전처리를 담당하며, KorQuAD 데이터셋을 파싱하고 청킹(chunking)하여 모델이 활용하기 좋은 형태로 만듭니다.
+
+이러한 구조는 각 모듈의 독립성을 높여 유지보수 및 확장을 용이하게 합니다.
+
+---
+
+### 2. 데이터 처리 및 전처리 역량 🛠️
+
+데이터는 `preprocess.py` 모듈에서 처리됩니다. 이 모듈은 KorQuAD 데이터셋을 효과적으로 활용하기 위해 불필요한 문장을 필터링하고, 텍스트를 청킹하는 역할을 수행합니다. `retriever.py`는 ChromaDB를 활용하여 전처리된 문서들을 벡터 데이터베이스에 저장하고 관리합니다.
+
+---
+
+### 3. 검색 정확도 및 질의 범위 제한 🎯
+
+-   `retriever.py`의 `search_similar` 메서드는 유사한 문서를 검색하며, 관련도 점수를 반환합니다.
+-   `retrieve_for_qa` 메서드는 질문과 컨텍스트를 결합하여 검색 쿼리를 생성함으로써 검색의 정확도를 높입니다.
+-   관련 없는 답변을 방지하기 위해 검색된 문서의 관련성 점수(유사도 거리)를 기반으로 **스코어 임계치(threshold)**를 설정하는 로직을 추가하여 품질을 관리할 예정입니다.
+
+---
+
+### 4. 응답 품질 및 사용자 경험 ✨
+
+`qa` 엔드포인트는 답변과 함께 `sources` 리스트를 반환하도록 설계되었습니다. 이를 통해 답변의 출처를 명확히 제시하여 신뢰성을 확보하고, 사용자에게 더 나은 경험을 제공합니다. 또한, 관련 문서를 찾지 못한 경우 "not implemented yet"과 같은 **graceful fallback** 메시지를 제공하도록 구현되었습니다.
+
+---
+
+### 5. 코드 품질 및 협업 가능성 🤝
+
+-   **설정 분리**: 모든 환경 변수는 `app/core/config.py`에서 관리됩니다.
+-   **표준화된 API**: FastAPI를 사용하여 `/api/routes.py` 경로로 엔드포인트를 표준화하고, Pydantic 모델을 통해 JSON 스키마를 명확히 정의했습니다.
+-   **CI/CD**: `.github/workflows/python-app.yml`에 테스트, 빌드, 배포를 위한 GitHub Actions CI/CD 파이프라인이 구성되어 있습니다.
+
+---
+
+### 설치 및 실행
+ korquad-rag 폴더에서 진행합니다.
+#### 1. 가상환경 생성 및 활성화
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate  # macOS/Linux
 ```
-
-### 2. 의존성 설치
-```bash
+#### 2. 의존성 설치
+```Bash
 pip install -r requirements.txt
 ```
-
-### 3. 테스트 실행
-```bash
-pytest -q
-```
-
-### 4. 개발 서버 실행
-```bash
+#### 3. 개발 서버 실행
+```Bash
 uvicorn src.app.main:app --reload --port 8000
 ```
-
-## API 사용법
-
-### 헬스 체크
-```bash
-curl http://localhost:8000/health
-```
-
-### 질의응답
-```bash
-curl -X POST "http://localhost:8000/qa" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "question": "한국의 수도는 어디인가요?",
-       "context": "서울은 대한민국의 수도입니다."
-     }'
-```
-
-## 개발
-
-개발 환경 설정을 위한 스크립트를 사용할 수 있습니다:
-
-```bash
-chmod +x scripts/run_dev.sh
-./scripts/run_dev.sh
-```
-
-## Docker 실행
-
-```bash
-docker build -t korquad-rag .
-docker run -p 8000:8000 korquad-rag
+#### 4. 스트림릿 앱 실행
+```Bash
+streamlit run streamlit_chatbot.py --server.port 8501
 ```
