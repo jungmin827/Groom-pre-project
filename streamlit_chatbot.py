@@ -78,7 +78,7 @@ if "loading" not in st.session_state:
 
 # 전송 버튼
 if st.button("전송") and user_input.strip():
-    API_URL = "http://localhost:8000/qa"  # 실제 환경에 맞게 수정
+    API_URL = "http://localhost:8000/api/v1/qa"  # 실제 환경에 맞게 수정
     payload = {"question": user_input, "top_k": 3}
     set_loading(True)
     try:
